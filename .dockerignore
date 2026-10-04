@@ -1,0 +1,22 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.git/
+.github/
+
+# Frontend dependencies and builds
+frontend/node_modules/
+frontend/dist/
+
+# Local databases and logs
+backend/blogs.db
+*.log
+
+# OS generated files
+.DS_Store
+
+images
+experiments

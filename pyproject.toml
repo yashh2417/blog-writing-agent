@@ -1,0 +1,25 @@
+[project]
+name = "blog-writing-agent"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Yash", email = "yashh2417@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "dotenv>=0.9.9",
+    "langchain>=1.4.3",
+    "langchain-community>=0.4.2",
+    "langchain-google-genai>=4.4.0",
+    "langchain-nvidia-ai-endpoints>=1.4.3",
+    "langgraph>=1.2.12",
+    "pydantic>=2.13.5",
+]
+
+[project.scripts]
+blog-writing-agent = "blog_writing_agent:main"
+
+[build-system]
+requires = ["uv_build>=0.12.22,<0.13.0"]
+build-backend = "uv_build"

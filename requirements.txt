@@ -1,0 +1,9 @@
+fastapi>=0.110.0
+uvicorn>=0.29.0
+psycopg2-binary>=2.9.9
+python-dotenv>=1.0.0
+pydantic>=2.7.0
+langgraph>=0.0.30
+langchain-core>=0.1.33
+langchain-google-genai>=1.0.0
+langchain-tavily>=0.0.1
