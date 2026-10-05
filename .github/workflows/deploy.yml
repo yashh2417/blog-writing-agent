@@ -32,13 +32,13 @@ jobs:
       - name: 🔧 Build Docker Image (Frontend)
         run: |
           docker build --build-arg VITE_API_URL=${{ secrets.VITE_API_URL }} \
-                       -t ${{ secrets.DOCKER_USERNAME }}/blog-agent-frontend:latest \
-                       -t ${{ secrets.DOCKER_USERNAME }}/blog-agent-frontend:${{ github.sha }} -f Dockerfile.frontend .
+                       -t ${{ secrets.DOCKER_USERNAME }}/blog-ai-agent:latest \
+                       -t ${{ secrets.DOCKER_USERNAME }}/blog-ai-agent:${{ github.sha }} -f Dockerfile.frontend .
 
       - name: 🚀 Push Docker Image (Frontend)
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/blog-agent-frontend:latest
-          docker push ${{ secrets.DOCKER_USERNAME }}/blog-agent-frontend:${{ github.sha }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/blog-ai-agent:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/blog-ai-agent:${{ github.sha }}
 
       - name: 🧹 Clean Up
         run: docker image prune -f
