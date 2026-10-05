@@ -3,10 +3,17 @@ from datetime import date, timedelta
 from pathlib import Path
 from langchain_core.messages import HumanMessage, SystemMessage
 
+import os
+from supabase import create_client
+
 from llms import llm
 from schemas import RouterDecision, State, EvidenceItem, EvidencePack, Plan, Task, GlobalImagePlan
 from tools import _tavily_search, _iso_to_date, _gemini_generate_image_bytes
 from system_prompts import ROUTER_SYSTEM, RESEARCH_SYSTEM, ORCH_SYSTEM, WORKER_SYSTEM, DECIDE_IMAGES_SYSTEM
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 # Router Node
@@ -242,32 +249,51 @@ def generate_and_place_images(state: State) -> dict:
         Path(filename).write_text(md, encoding="utf-8")
         return {"final": md}
 
-    images_dir = Path("images")
-    images_dir.mkdir(exist_ok=True)
+    supabase_url = os.environ.get("SUPABASE_URL", "")
+    supabase_key = os.environ.get("SUPABASE_KEY", "")
+    bucket_name = os.environ.get("SUPABASE_BUCKET", "blog-images")
+    
+    # Only initialize if credentials are provided
+    supabase = None
+    if supabase_url and supabase_key:
+        supabase = create_client(supabase_url, supabase_key)
 
     for spec in image_specs:
         placeholder = spec["placeholder"]
         filename = spec["filename"]
-        out_path = images_dir / filename
+        
+        # Create a safe folder name based on the blog title
+        safe_title = "".join([c if c.isalnum() else "-" for c in plan.blog_title]).strip("-")
+        storage_path = f"{safe_title}/{filename}"
 
-        # generate only if needed
-        if not out_path.exists():
-            try:
-                img_bytes = _gemini_generate_image_bytes(spec["prompt"])
-                out_path.write_bytes(img_bytes)
-            except Exception as e:
-                # graceful fallback: keep doc usable
-                prompt_block = (
-                    f"> **[IMAGE GENERATION FAILED]** {spec.get('caption','')}\n>\n"
-                    f"> **Alt:** {spec.get('alt','')}\n>\n"
-                    f"> **Prompt:** {spec.get('prompt','')}\n>\n"
-                    f"> **Error:** {e}\n"
+        try:
+            img_bytes = _gemini_generate_image_bytes(spec["prompt"])
+            
+            if supabase:
+                # Upload to Supabase Storage
+                supabase.storage.from_(bucket_name).upload(
+                    path=storage_path,
+                    file=img_bytes,
+                    file_options={"content-type": "image/jpeg", "x-upsert": "true"}
                 )
-                md = md.replace(placeholder, prompt_block)
-                continue
-
-        img_md = f"![{spec['alt']}](images/{filename})\n*{spec['caption']}*"
-        md = md.replace(placeholder, img_md)
+                
+                # Get public URL
+                public_url = supabase.storage.from_(bucket_name).get_public_url(storage_path)
+            else:
+                raise Exception("SUPABASE_URL and SUPABASE_KEY are not set in .env")
+                
+            img_md = f"![{spec['alt']}]({public_url})\n*{spec['caption']}*"
+            md = md.replace(placeholder, img_md)
+        except Exception as e:
+            # graceful fallback: keep doc usable
+            prompt_block = (
+                f"> **[IMAGE GENERATION FAILED]** {spec.get('caption','')}\n>\n"
+                f"> **Alt:** {spec.get('alt','')}\n>\n"
+                f"> **Prompt:** {spec.get('prompt','')}\n>\n"
+                f"> **Error:** {e}\n"
+            )
+            md = md.replace(placeholder, prompt_block)
+            continue
 
     filename = f"{plan.blog_title}.md"
     Path(filename).write_text(md, encoding="utf-8")

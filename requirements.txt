@@ -7,3 +7,4 @@ langgraph>=0.0.30
 langchain-core>=0.1.33
 langchain-google-genai>=1.0.0
 langchain-tavily>=0.0.1
+supabase>=2.3.0

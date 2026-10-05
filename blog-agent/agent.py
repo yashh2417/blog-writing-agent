@@ -5,7 +5,11 @@ from schemas import State
 from nodes import router_node, research_node, orchestrator_node, worker_node, route_next, generate_and_place_images, merge_content, decide_images
 from datetime import date
 from typing import Optional
-from schemas import Plan
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 
 # 1. Create Reducer Subgraph

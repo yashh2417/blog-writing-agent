@@ -8,8 +8,10 @@ from psycopg2.extras import RealDictCursor
 import uuid
 import sys
 import os
+import re
 from datetime import datetime
 from dotenv import load_dotenv
+from supabase import create_client
 
 # Load environment variables from .env
 root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -94,9 +96,9 @@ def run_agent_task(blog_id: str, topic: str, as_of: str):
 
 @app.post("/api/blogs")
 def create_blog(request: BlogRequest, background_tasks: BackgroundTasks):
-    from datetime import date
+    from datetime import date, timezone
     blog_id = str(uuid.uuid4())
-    created_at = datetime.utcnow().isoformat()
+    created_at = datetime.now(timezone.utc).isoformat()
     
     actual_as_of = request.as_of or date.today().isoformat()
     
@@ -158,15 +160,42 @@ def download_blog(blog_id: str):
 @app.delete("/api/blogs/{blog_id}")
 def delete_blog(blog_id: str):
     conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute("SELECT content FROM blogs WHERE id = %s", (blog_id,))
+    row = cur.fetchone()
+    
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Blog not found")
+        
+    content = row["content"] or ""
+    
     cur = conn.cursor()
     cur.execute("DELETE FROM blogs WHERE id = %s", (blog_id,))
     deleted = cur.rowcount
     conn.commit()
     conn.close()
     
-    if deleted == 0:
-        raise HTTPException(status_code=404, detail="Blog not found")
-        
+    # Try to delete associated images from Supabase Storage only if images are present
+    if deleted > 0 and content and "![" in content:
+        try:
+            supabase_url = os.environ.get("SUPABASE_URL", "")
+            supabase_key = os.environ.get("SUPABASE_KEY", "")
+            bucket_name = os.environ.get("SUPABASE_BUCKET", "blog-images")
+            
+            if supabase_url and supabase_key:
+                supabase = create_client(supabase_url, supabase_key)
+                
+                # Extract the relative file paths from the markdown image URLs
+                pattern = rf"{supabase_url}/storage/v1/object/public/{bucket_name}/([^\s\)]+)"
+                matches = re.findall(pattern, content)
+                
+                if matches:
+                    supabase.storage.from_(bucket_name).remove(matches)
+                    print(f"Deleted {len(matches)} images from Supabase for blog {blog_id}")
+        except Exception as e:
+            print(f"Failed to delete images from Supabase: {e}")
+            
     return {"status": "success", "message": "Blog deleted successfully"}
 
 if __name__ == "__main__":
