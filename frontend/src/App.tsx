@@ -9,7 +9,7 @@ import { PenTool, Download, FileText, LayoutTemplate, Clock, AlertTriangle, Sear
 import { format } from 'date-fns';
 import './App.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/blogs';
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface Blog {
   id: string;
@@ -87,7 +87,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [selectedBlogId, setSelectedBlogId] = useState<string | null>(null);
   const [activeBlog, setActiveBlog] = useState<Blog | null>(null);
-  
+
   // Polling for generating status
   useEffect(() => {
     fetchBlogs();
@@ -96,7 +96,7 @@ function App() {
     }, 5000);
     return () => clearInterval(interval);
   }, []);
-  
+
   const fetchBlogs = async (silent = false) => {
     try {
       const res = await axios.get(API_URL);
@@ -115,7 +115,7 @@ function App() {
       }
     }
   }, [blogs, selectedBlogId, activeBlog]);
-  
+
   const fetchBlogDetails = async (id: string) => {
     try {
       const res = await axios.get(`${API_URL}/${id}`);
@@ -124,7 +124,7 @@ function App() {
       console.error("Failed to fetch blog details", error);
     }
   };
-  
+
   const handleSelectBlog = (id: string) => {
     setSelectedBlogId(id);
     const blog = blogs.find(b => b.id === id);
@@ -134,11 +134,11 @@ function App() {
       setActiveBlog(blog || null);
     }
   };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!topic) return;
-    
+
     setLoading(true);
     try {
       const formattedDate = format(asOfDate || new Date(), 'yyyy-MM-dd');
@@ -156,16 +156,16 @@ function App() {
       setLoading(false);
     }
   };
-  
+
   const handleDownload = () => {
     if (!selectedBlogId) return;
     window.open(`${API_URL}/${selectedBlogId}/download`, '_blank');
   };
-  
+
   const handleDelete = async () => {
     if (!selectedBlogId) return;
     if (!window.confirm("Are you sure you want to delete this blog?")) return;
-    
+
     try {
       await axios.delete(`${API_URL}/${selectedBlogId}`);
       setSelectedBlogId(null);
@@ -176,62 +176,62 @@ function App() {
       alert("Failed to delete blog");
     }
   };
-  
+
   return (
     <div className="app-container">
       {/* Sidebar for forms and history */}
       <div className="sidebar">
-        
+
         {/* Create Blog Card */}
         <div className="glass-card">
-          <h2 className="gradient-text"><PenTool style={{marginRight: 8}}/> Blog AI Agent</h2>
+          <h2 className="gradient-text"><PenTool style={{ marginRight: 8 }} /> Blog AI Agent</h2>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
             Generate fully-researched technical deep dives in seconds.
           </p>
-          
+
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label>Topic or Title</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="e.g. LLM Evaluation in 2026"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 required
               />
             </div>
-            
+
             <div className="form-group">
               <label>As-Of Date (Knowledge Cutoff)</label>
-              <DatePicker 
-                selected={asOfDate} 
-                onChange={(date) => setAsOfDate(date)} 
+              <DatePicker
+                selected={asOfDate}
+                onChange={(date) => setAsOfDate(date)}
                 dateFormat="yyyy-MM-dd"
                 maxDate={new Date()}
                 placeholderText="Optional: Defaults to today"
                 isClearable
               />
             </div>
-            
+
             <button type="submit" className="btn" disabled={loading || !topic}>
               {loading ? <span className="loader"></span> : 'Generate Report'}
             </button>
           </form>
         </div>
-        
+
         {/* History List */}
         <div className="glass-card" style={{ flex: 1, overflowY: 'auto' }}>
           <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <FileText size={18} /> Generated Blogs
           </h3>
-          
+
           <div className="blog-list">
             {blogs.length === 0 ? (
-              <p style={{color: 'var(--text-secondary)', fontSize: '0.9rem'}}>No blogs generated yet.</p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>No blogs generated yet.</p>
             ) : (
               blogs.map(blog => (
-                <div 
-                  key={blog.id} 
+                <div
+                  key={blog.id}
                   className={`blog-item ${selectedBlogId === blog.id ? 'active' : ''}`}
                   onClick={() => handleSelectBlog(blog.id)}
                 >
@@ -249,9 +249,9 @@ function App() {
             )}
           </div>
         </div>
-        
+
       </div>
-      
+
       {/* Main Content Area */}
       <div className="glass-card main-content">
         {!activeBlog ? (
@@ -262,7 +262,7 @@ function App() {
           </div>
         ) : activeBlog.status === 'generating' ? (
           <div className="empty-state">
-            <div className="loader" style={{width: 40, height: 40, borderWidth: 4, marginBottom: 16, borderColor: 'var(--primary-color)', borderTopColor: 'transparent'}}></div>
+            <div className="loader" style={{ width: 40, height: 40, borderWidth: 4, marginBottom: 16, borderColor: 'var(--primary-color)', borderTopColor: 'transparent' }}></div>
             <h2>Researching & Writing...</h2>
             <p>The agent is currently writing the article and generating images. This takes ~60 seconds.</p>
           </div>
@@ -270,27 +270,27 @@ function App() {
           <div className="empty-state">
             <AlertTriangle color="#ef4444" />
             <h2>Generation Failed</h2>
-            <p style={{color: '#ef4444', maxWidth: 400}}>{activeBlog.content}</p>
+            <p style={{ color: '#ef4444', maxWidth: 400 }}>{activeBlog.content}</p>
           </div>
         ) : (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-color)' }}>
               <div>
-                <span className="status-badge status-completed" style={{marginBottom: 8, display: 'inline-block'}}>Completed</span>
+                <span className="status-badge status-completed" style={{ marginBottom: 8, display: 'inline-block' }}>Completed</span>
                 <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                   Knowledge Date: {activeBlog.as_of}
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <button className="btn btn-secondary" style={{width: 'auto'}} onClick={handleDownload}>
+                <button className="btn btn-secondary" style={{ width: 'auto' }} onClick={handleDownload}>
                   <Download size={18} /> Download Markdown
                 </button>
-                <button className="btn" style={{width: 'auto', background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)'}} onClick={handleDelete}>
+                <button className="btn" style={{ width: 'auto', background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }} onClick={handleDelete}>
                   <Trash2 size={18} /> Delete
                 </button>
               </div>
             </div>
-            
+
             <div className="markdown-container">
               {activeBlog.content ? (
                 <ReactMarkdown
@@ -307,7 +307,7 @@ function App() {
           </>
         )}
       </div>
-      
+
     </div>
   );
 }
