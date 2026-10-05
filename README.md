@@ -2,7 +2,7 @@
 
 An autonomous, multi-agent AI system that researches, writes, and publishes fully comprehensive, technical blog posts with AI-generated images. Built with LangGraph, this system mimics a real-world editorial team by dividing complex tasks into specialized AI nodes.
 
-🔗 **Live Website**: [https://blog-agent-frontend-fjf8.onrender.com/](https://blog-agent-frontend-fjf8.onrender.com/)  
+🔗 **Live Website**: [https://blog-agent-frontend-fjf8.onrender.com/](https://blog-ai-agent-2lg7.onrender.com/)  
 🐙 **GitHub Repository**: [https://github.com/yashh2417/blog-writing-agent](https://github.com/yashh2417/blog-writing-agent)  
 🐳 **Docker Images**: Hosted on Docker Hub (Automated via GitHub Actions CI/CD)
 
